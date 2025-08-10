@@ -7,11 +7,16 @@ const urlsToCache = [
 
 // 安装事件
 self.addEventListener('install', event => {
+  console.log('DHY乐高拼搭图生成器 Service Worker 安装中...');
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
         console.log('DHY乐高拼搭图生成器缓存已打开');
         return cache.addAll(urlsToCache);
+      })
+      .then(() => {
+        // 立即激活新的Service Worker
+        return self.skipWaiting();
       })
   );
 });
@@ -51,16 +56,16 @@ self.addEventListener('fetch', event => {
 
 // 激活事件
 self.addEventListener('activate', event => {
+  console.log('DHY乐高拼搭图生成器 Service Worker 激活');
   event.waitUntil(
-    caches.keys().then(cacheNames => {
-      return Promise.all(
-        cacheNames.map(cacheName => {
-          if (cacheName !== CACHE_NAME) {
-            console.log('删除旧缓存:', cacheName);
-            return caches.delete(cacheName);
-          }
-        })
+    (async () => {
+      // 清理旧缓存
+      const names = await caches.keys();
+      await Promise.all(
+        names.map(n => (n !== CACHE_NAME ? (console.log('删除旧缓存:', n), caches.delete(n)) : null))
       );
-    })
+      // 立即控制所有客户端
+      await self.clients.claim();
+    })()
   );
 });

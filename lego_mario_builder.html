@@ -1051,6 +1051,17 @@
         });
 
         init();
+
+        // 注册 Service Worker（用于清理旧缓存并离线加速）
+        if ('serviceWorker' in navigator) {
+          window.addEventListener('load', () => {
+            navigator.serviceWorker.register('sw.js')
+              .then(reg => {
+                console.log('Service Worker 已注册:', reg.scope);
+              })
+              .catch(err => console.log('Service Worker 注册失败:', err));
+          });
+        }
     </script>
     
     <footer style="text-align: center; padding: 20px; margin-top: 30px; border-top: 1px solid #eee; color: #666; font-size: 12px;" id="animatedFooter">

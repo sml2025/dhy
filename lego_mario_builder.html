@@ -153,6 +153,42 @@
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
             overflow: auto;
             max-height: 800px;
+            position: relative;
+        }
+        
+        .canvas-zoom-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .zoom-btn {
+            padding: 8px 12px;
+            border: 2px solid #ddd;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            min-width: 40px;
+            text-align: center;
+        }
+        
+        .zoom-btn:hover {
+            background: #f0f0f0;
+            border-color: #007bff;
+            transform: translateY(-1px);
+        }
+        
+        .zoom-info {
+            font-size: 14px;
+            color: #666;
+            margin: 0 10px;
+            min-width: 60px;
+            text-align: center;
         }
 
         .canvas {
@@ -160,6 +196,7 @@
             cursor: crosshair;
             display: block;
             margin: 0 auto;
+            transition: transform 0.3s ease;
         }
 
         .sidebar {
@@ -395,6 +432,12 @@
 
         <div class="main-content">
             <div class="canvas-container">
+                <div class="canvas-zoom-controls">
+                    <button class="zoom-btn" onclick="zoomOut()" title="缩小">➖</button>
+                    <span class="zoom-info" id="zoomLevel">100%</span>
+                    <button class="zoom-btn" onclick="zoomIn()" title="放大">➕</button>
+                    <button class="zoom-btn" onclick="resetZoom()" title="重置缩放">🔄</button>
+                </div>
                 <canvas id="legoCanvas" class="canvas" width="630" height="950"></canvas>
             </div>
 
@@ -429,6 +472,20 @@
         // 全局变量
         const canvas = document.getElementById('legoCanvas');
         const ctx = canvas.getContext('2d');
+        let zoom = 1.0;
+        const ZOOM_MIN = 0.2;
+        const ZOOM_MAX = 4.0;
+        const ZOOM_STEP = 0.1;
+        function applyZoom(){
+          const scale = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, zoom));
+          canvas.style.transform = `scale(${scale})`;
+          const zl = document.getElementById('zoomLevel');
+          if(zl) zl.textContent = `${Math.round(scale*100)}%`;
+        }
+        function zoomIn(){ zoom = Math.min(ZOOM_MAX, +(zoom + ZOOM_STEP).toFixed(3)); applyZoom(); }
+        function zoomOut(){ zoom = Math.max(ZOOM_MIN, +(zoom - ZOOM_STEP).toFixed(3)); applyZoom(); }
+        function resetZoom(){ zoom = 1.0; applyZoom(); }
+        window.addEventListener('DOMContentLoaded', applyZoom);
         
         // 可变网格规格
         let TOTAL_W_MM = 1000, TOTAL_H_MM = 1500, MOD_W_MM = 15.8, MOD_H_MM = 15.8;
@@ -954,8 +1011,9 @@
           // 画布绘制与交互
           canvas.addEventListener('click', (e)=>{
             const rect = canvas.getBoundingClientRect();
-            const x = Math.floor((e.clientX - rect.left) / CELL_SIZE);
-            const y = Math.floor((e.clientY - rect.top) / CELL_SIZE);
+            const scale = zoom;
+            const x = Math.floor((e.clientX - rect.left) / (CELL_SIZE * scale));
+            const y = Math.floor((e.clientY - rect.top) / (CELL_SIZE * scale));
             if(x>=0 && x<GRID_WIDTH && y>=0 && y<GRID_HEIGHT){
               gridData[y][x] = selectedColor;
               drawGrid();

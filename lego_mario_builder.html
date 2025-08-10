@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DHY乐高拼搭图生成器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #333;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .specs {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            border-left: 5px solid #4ecdc4;
+        }
+
+        .specs h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .specs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .spec-item {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .spec-label {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .spec-value {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .controls {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #4ecdc4, #44a08d);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a52);
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(45deg, #2ecc71, #27ae60);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 30px;
+        }
+
+        .canvas-container {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            overflow: auto;
+            max-height: 800px;
+        }
+
+        .canvas {
+            border: 2px solid #ddd;
+            cursor: crosshair;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .sidebar {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            height: fit-content;
+        }
+
+        .color-palette {
+            margin-bottom: 25px;
+        }
+
+        .color-palette h4 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .colors {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        .color-btn {
+            width: 50px;
+            height: 50px;
+            border: 3px solid #ddd;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .color-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .color-btn.active {
+            border-color: #333;
+            transform: scale(1.1);
+        }
+
+        .color-btn::after {
+            content: '';
+            position: absolute;
+            bottom: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        .materials-list {
+            margin-bottom: 25px;
+        }
+
+        .materials-list h4 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .material-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .material-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+
+        .material-info {
+            display: flex;
+            align-items: center;
+            flex: 1;
+        }
+
+        .material-count {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .tools {
+            margin-bottom: 25px;
+        }
+
+        .tools h4 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .tool-btn {
+            width: 100%;
+            margin-bottom: 10px;
+            text-align: left;
+            padding: 10px 15px;
+        }
+
+        .grid-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            opacity: 0.3;
+        }
+
+        .coordinates {
+            font-size: 8px;
+            fill: #666;
+            text-anchor: middle;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #f0f0f0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(45deg, #4ecdc4, #44a08d);
+            transition: width 0.3s ease;
+        }
+
+        .instruction-panel {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .instruction-panel h5 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+
+        .instruction-panel p {
+            color: #856404;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .controls {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 id="animatedTitle">🧱 DHY乐高拼搭图生成器</h1>
+            <p>高精度像素化设计，完整材料清单与搭建指南</p>
+            <p>生成总数统计：<span id="generateCount" style="color: red; font-weight: bold;">000000000</span></p>
+        </div>
+
+        <div class="specs">
+            <h3>📐 项目规格（可自定义）</h3>
+            <div class="specs-grid">
+                <div class="spec-item">
+                    <div class="spec-label">总体尺寸 (mm)</div>
+                    <div class="spec-inputs">
+                        <input type="number" id="totalWidth" value="1000" min="100" max="5000" onchange="updateSpecs()"> ×
+                        <input type="number" id="totalHeight" value="1500" min="100" max="5000" onchange="updateSpecs()">
+                    </div>
+                </div>
+                <div class="spec-item">
+                    <div class="spec-label">乐高模块尺寸 (mm)</div>
+                    <div class="spec-inputs">
+                        <input type="number" id="moduleWidth" value="15.8" min="5" max="50" step="0.1" onchange="updateSpecs()"> ×
+                        <input type="number" id="moduleHeight" value="15.8" min="5" max="50" step="0.1" onchange="updateSpecs()">
+                    </div>
+                </div>
+                <div class="spec-item">
+                    <div class="spec-label">网格数量</div>
+                    <div class="spec-value" id="gridSize">63×95格</div>
+                </div>
+                <div class="spec-item">
+                    <div class="spec-label">总乐高数量</div>
+                    <div class="spec-value" id="totalBricks">5,985块</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <input type="file" id="imageInput" accept="image/*" class="btn" style="padding:10px 14px;background:#fff;border:1px solid #ddd;color:#333;">
+            <button class="btn btn-primary" onclick="generateFromImage()">🖼️ 从图片生成乐高底图</button>
+            <button class="btn btn-secondary" onclick="clearCanvas()">🗑️ 清空画布</button>
+            <button class="btn btn-success" onclick="generateInstructions()">📋 生成搭建指南</button>
+            <button class="btn btn-primary" onclick="exportDesign(true)">💾 导出高清拼搭图</button>
+            <label style="display:flex;align-items:center;gap:6px;font-size:14px;color:#333">
+                <input type="checkbox" id="toggleGridCbx" checked onchange="toggleGrid()"> 显示网格
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:14px;color:#333">
+                <input type="checkbox" id="toggleNumCbx" checked onchange="toggleNumbers()"> 标注序号
+            </label>
+        </div>
+
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+        </div>
+
+        <div class="instruction-panel">
+            <h5>💡 使用说明</h5>
+            <p>1. 点击"生成乐高图案"创建像素化乐高图案<br>
+               2. 使用右侧调色板选择颜色，点击网格进行绘制<br>
+               3. 查看材料清单了解所需乐高数量<br>
+               4. 生成搭建指南获得详细拼搭步骤</p>
+        </div>
+
+        <div class="main-content">
+            <div class="canvas-container">
+                <canvas id="legoCanvas" class="canvas" width="630" height="950"></canvas>
+            </div>
+
+            <div class="sidebar">
+                <div class="color-palette">
+                    <h4>🎨 调色板</h4>
+                    <div class="colors" id="colorPalette">
+                        <!-- 颜色将通过JavaScript动态生成 -->
+                    </div>
+                </div>
+
+                <div class="materials-list">
+                    <h4>🧱 材料清单</h4>
+                    <div id="materialsList">
+                        <!-- 材料清单将通过JavaScript动态生成 -->
+                    </div>
+                </div>
+
+                <div class="tools">
+                    <h4>🔧 工具</h4>
+                    <button class="btn tool-btn btn-primary" id="showGridBtn" onclick="showGridNumbers()">显示格子编号</button>
+                    <button class="btn tool-btn btn-secondary" id="buildGuideBtn" onclick="generateBuildingGuide()">生成拼搭顺序</button>
+                    <button class="btn tool-btn btn-success" id="calcCostBtn" onclick="calculateCost()">计算材料成本</button>
+-                    <div id="costDisplay" style="margin-top: 10px; font-weight: bold; color: #333;"></div>
++                    <div id="costDisplay" style="display:inline-block; margin-left:12px; font-weight: bold; color: #333; vertical-align: middle;"></div>
+                 </div>
+             </div>
+         </div>
+     </div>
+ 
+     <script>
+        // 全局变量
+        const canvas = document.getElementById('legoCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // 可变网格规格
+        let TOTAL_W_MM = 1000, TOTAL_H_MM = 1500, MOD_W_MM = 15.8, MOD_H_MM = 15.8;
+        let GRID_WIDTH = Math.round(TOTAL_W_MM / MOD_W_MM);
+        let GRID_HEIGHT = Math.round(TOTAL_H_MM / MOD_H_MM);
+        const CELL_SIZE = 10;
+        let showNumbers = true;
+
+        // 补充：乐高颜色调色板与全局状态
+        const LEGO_COLORS = {
+          'white': '#F4F4F4',
+          'black': '#1B2A34',
+          'red': '#C91A09',
+          'blue': '#0055BF',
+          'yellow': '#FFD700',
+          'green': '#237841',
+          'orange': '#FE8A18',
+          'brown': '#582A12',
+          'gray': '#9BA19D',
+          'pink': '#FEC7ED',
+          'purple': '#81007B',
+          'lime': '#BBE90B',
+          'tan': '#E4CD9E',
+          'darkgray': '#6C6E68'
+        };
+        let selectedColor = 'red';
+        let gridData = Array(GRID_HEIGHT).fill().map(() => Array(GRID_WIDTH).fill('white'));
+        let showGrid = true;
+
+        // === 生成总数统计（9位，红色） ===
+        const COUNT_KEY = 'dhy_total_generate_count';
+        function format9(n){
+            const s = String(n);
+            return s.length>=9 ? s.slice(-9) : '0'.repeat(9 - s.length) + s;
+        }
+        function getCount(){
+            const v = parseInt(localStorage.getItem(COUNT_KEY)||'0',10);
+            return isNaN(v)?0:v;
+        }
+        function setCount(n){
+            localStorage.setItem(COUNT_KEY, String(n));
+            const el = document.getElementById('generateCount');
+            if(el) el.textContent = format9(n);
+        }
+        function incCount(){ setCount(getCount()+1); }
+
+        // 从图片生成 63×95 乐高底图
+        function generateFromImage(){
+          incCount(); // 增加计数
+          const file = document.getElementById('imageInput').files[0];
+          if(!file){
+            alert('请先选择一张图片');
+            return;
+          }
+          const img = new Image();
+          img.onload = () => {
+            // 使用离屏canvas把图片缩放到63×95像素
+            const off = document.createElement('canvas');
+            off.width = GRID_WIDTH;
+            off.height = GRID_HEIGHT;
+            const octx = off.getContext('2d');
+            octx.imageSmoothingEnabled = false;
+            // 保持比例居中填充
+            const ratio = Math.min(off.width/img.width, off.height/img.height);
+            const dw = img.width*ratio;
+            const dh = img.height*ratio;
+            const dx = (off.width-dw)/2;
+            const dy = (off.height-dh)/2;
+            octx.fillStyle = '#ffffff';
+            octx.fillRect(0,0,off.width,off.height);
+            octx.drawImage(img, dx, dy, dw, dh);
+            const data = octx.getImageData(0,0,off.width,off.height).data;
+            // 写入gridData
+            gridData = Array(GRID_HEIGHT).fill().map(()=>Array(GRID_WIDTH).fill('white'));
+            let i = 0;
+            for(let y=0;y<GRID_HEIGHT;y++){
+              for(let x=0;x<GRID_WIDTH;x++){
+                const r = data[i++];
+                const g = data[i++];
+                const b = data[i++];
+                i++; // skip alpha
+                const c = nearestLegoColor(r,g,b);
+                gridData[y][x] = c;
+              }
+            }
+            drawGrid();
+            updateMaterialsList();
+            updateProgress();
+          };
+          img.src = URL.createObjectURL(file);
+        }
+
+        function toggleNumbers(){
+          showNumbers = document.getElementById('toggleNumCbx').checked;
+          drawGrid();
+        }
+
+        // 绘制网格（含序号与网格线）
+        function drawGrid(){
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          for (let y = 0; y < GRID_HEIGHT; y++) {
+            for (let x = 0; x < GRID_WIDTH; x++) {
+              const color = LEGO_COLORS[gridData[y][x]];
+              ctx.fillStyle = color;
+              ctx.fillRect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+              ctx.strokeStyle = '#ddd';
+              ctx.lineWidth = 0.5;
+              ctx.strokeRect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+              if (showNumbers) {
+                ctx.fillStyle = '#222';
+                ctx.font = '6px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                const idx = y * GRID_WIDTH + x + 1; // 全局序号
+                ctx.fillText(idx.toString(), x * CELL_SIZE + CELL_SIZE / 2, y * CELL_SIZE + CELL_SIZE / 2);
+              }
+            }
+          }
+          if (showGrid) {
+            ctx.strokeStyle = '#999';
+            ctx.lineWidth = 0.5;
+            for (let x = 0; x <= GRID_WIDTH; x++) {
+              ctx.beginPath();
+              ctx.moveTo(x * CELL_SIZE, 0);
+              ctx.lineTo(x * CELL_SIZE, canvas.height);
+              ctx.stroke();
+            }
+            for (let y = 0; y <= GRID_HEIGHT; y++) {
+              ctx.beginPath();
+              ctx.moveTo(0, y * CELL_SIZE);
+              ctx.lineTo(canvas.width, y * CELL_SIZE);
+              ctx.stroke();
+            }
+          }
+        }
+
+        // 导出高清拼搭图（含每格序号与边缘行列号）
+        function exportDesign(highRes=false){
+          incCount(); // 增加计数
+          const scale = highRes ? 40 : CELL_SIZE; // 高清每格40像素
+          const w = GRID_WIDTH*scale;
+          const h = GRID_HEIGHT*scale;
+          const padLeft = 120, padTop = 120, padRight = 420, padBottom = 120;
+          const out = document.createElement('canvas');
+          out.width = w + padLeft + padRight;
+          out.height = h + padTop + padBottom;
+          const c = out.getContext('2d');
+          c.fillStyle = '#ffffff';
+          c.fillRect(0,0,out.width,out.height);
+          // 标题
+          c.fillStyle = '#111';
+          c.font = 'bold 36px Arial';
+          c.fillText('乐高拼搭图 63×95（每格15.8mm）', padLeft, 60);
+          c.font = '20px Arial';
+          c.fillText('总体尺寸约 1000×1500mm（含微小取整误差）', padLeft, 90);
+
+          // 绘制主体
+          for(let y=0;y<GRID_HEIGHT;y++){
+            for(let x=0;x<GRID_WIDTH;x++){
+              c.fillStyle = LEGO_COLORS[gridData[y][x]];
+              const x1 = padLeft + x*scale;
+              const y1 = padTop + y*scale;
+              c.fillRect(x1, y1, scale, scale);
+              c.strokeStyle = '#cccccc';
+              c.lineWidth = 1;
+              c.strokeRect(x1, y1, scale, scale);
+              // 序号
+              if(showNumbers){
+                c.fillStyle = '#111';
+                c.font = `${Math.max(12, Math.floor(scale*0.28))}px Arial`;
+                c.textAlign = 'center';
+                c.textBaseline = 'middle';
+                const idx = y*GRID_WIDTH + x + 1;
+                c.fillText(idx.toString(), x1 + scale/2, y1 + scale/2);
+              }
+            }
+          }
+          // 边缘行列标注
+          c.fillStyle = '#333';
+          c.font = '16px Arial';
+          c.textAlign = 'center';
+          for(let x=0;x<GRID_WIDTH;x++){
+            const cx = padLeft + x*scale + scale/2;
+            c.fillText((x+1).toString(), cx, padTop-20);
+            c.fillText((x+1).toString(), cx, padTop+h+20);
+          }
+          c.textAlign = 'right';
+          for(let y=0;y<GRID_HEIGHT;y++){
+            const cy = padTop + y*scale + scale/2;
+            c.fillText((y+1).toString(), padLeft-10, cy);
+            c.textAlign = 'left';
+            c.fillText((y+1).toString(), padLeft+w+10, cy);
+            c.textAlign = 'right';
+          }
+
+          // 材料清单汇总
+          const materials = {};
+          for(let y=0;y<GRID_HEIGHT;y++){
+            for(let x=0;x<GRID_WIDTH;x++){
+              const color = gridData[y][x];
+              materials[color] = (materials[color]||0)+1;
+            }
+          }
+          let yText = padTop;
+          c.fillStyle = '#111';
+          c.font = 'bold 24px Arial';
+          c.fillText('材料清单（中文版）', padLeft+w+40, yText);
+          yText += 30;
+          c.font = '18px Arial';
+          const namesZH = {white:'白色',black:'黑色',red:'红色',blue:'蓝色',yellow:'黄色',green:'绿色',orange:'橙色',brown:'棕色',gray:'灰色',pink:'粉色',purple:'紫色',lime:'柠檬绿',tan:'棕褐色',darkgray:'深灰'};
+          Object.entries(materials).sort((a,b)=>b[1]-a[1]).forEach(([color,count])=>{
+            if(count>0){
+              c.fillStyle = LEGO_COLORS[color];
+              c.fillRect(padLeft+w+40, yText-14, 20, 20);
+              c.strokeStyle = '#333';
+              c.strokeRect(padLeft+w+40, yText-14, 20, 20);
+              c.fillStyle = '#111';
+              c.fillText(`${namesZH[color]||color}：${count} 块`, padLeft+w+70, yText);
+              yText += 26;
+            }
+          });
+
+          const link = document.createElement('a');
+          link.download = highRes ? '乐高高清拼搭图.png' : '乐高设计图.png';
+          link.href = out.toDataURL('image/png');
+          link.click();
+        }
+
+        function generateMarioPattern() {
+            // 创建马里奥像素图案
+            const mario = [
+                "wwwwwrrrrrrwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww",
+                "wwwrrrrrrrrrrwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww",
+                "wwwbbbtoootbbwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww",
+                "wwbbtttooottbbwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww",
+                "wwbbttoottottbwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww",
+                "wwbbtttoottttbwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww",
+                "wwwbttttttttbwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww",
+                "wwwwbbbttbbbwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww",
+                "wwwwbbbttbbbwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww",
+                "wwwttttttttttwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww"
+            ];
+            
+            // 转换颜色编码
+            const colorMap = {
+                'w': 'white',
+                'r': 'red',
+                'b': 'brown',
+                't': 'tan',
+                'o': 'orange'
+            };
+            
+            // 清空网格
+            gridData = Array(GRID_HEIGHT).fill().map(() => Array(GRID_WIDTH).fill('white'));
+            
+            // 在网格中心绘制马里奥
+            const startY = Math.floor((GRID_HEIGHT - mario.length) / 2);
+            const startX = Math.floor((GRID_WIDTH - mario[0].length) / 2);
+            
+            for (let y = 0; y < mario.length; y++) {
+                for (let x = 0; x < mario[y].length; x++) {
+                    const gridY = startY + y;
+                    const gridX = startX + x;
+                    
+                    if (gridY >= 0 && gridY < GRID_HEIGHT && gridX >= 0 && gridX < GRID_WIDTH) {
+                        const colorCode = mario[y][x];
+                        gridData[gridY][gridX] = colorMap[colorCode] || 'white';
+                    }
+                }
+            }
+            
+            drawGrid();
+            updateMaterialsList();
+            updateProgress();
+        }
+
+        function updateMaterialsList() {
+            const materials = {};
+            
+            // 统计每种颜色的数量
+            for (let y = 0; y < GRID_HEIGHT; y++) {
+                for (let x = 0; x < GRID_WIDTH; x++) {
+                    const color = gridData[y][x];
+                    materials[color] = (materials[color] || 0) + 1;
+                }
+            }
+            
+            // 生成材料清单HTML
+            const materialsList = document.getElementById('materialsList');
+            materialsList.innerHTML = '';
+            
+            Object.entries(materials).forEach(([color, count]) => {
+                if (count > 0) {
+                    const item = document.createElement('div');
+                    item.className = 'material-item';
+                    item.innerHTML = `
+                        <div class="material-info">
+                            <div class="material-color" style="background-color: ${LEGO_COLORS[color]}"></div>
+                            <span>${getColorName(color)}</span>
+                        </div>
+                        <div class="material-count">${count}块</div>
+                    `;
+                    materialsList.appendChild(item);
+                }
+            });
+
+            // 更新成本显示
+            updateCostDisplay();
+        }
+
+        function updateCostDisplay() {
+            const materials = {};
+            for (let y = 0; y < GRID_HEIGHT; y++) {
+                for (let x = 0; x < GRID_WIDTH; x++) {
+                    const color = gridData[y][x];
+                    materials[color] = (materials[color] || 0) + 1;
+                }
+            }
+            
+            let totalCost = 0;
+            const pricePerBrick = 0.5;
+            
+            Object.entries(materials).forEach(([color, count]) => {
+                if (color !== 'white') {
+                    totalCost += count * pricePerBrick;
+                }
+            });
+            
+            const costDisplay = document.getElementById('costDisplay');
+            if (costDisplay) {
+                costDisplay.innerHTML = `预估成本：<span style="color: #e74c3c; font-size: 18px;">${totalCost.toFixed(2)}元</span>`;
+            }
+        }
+
+        function getColorName(color) {
+            const names = {
+                'white': '白色',
+                'black': '黑色',
+                'red': '红色',
+                'blue': '蓝色',
+                'yellow': '黄色',
+                'green': '绿色',
+                'orange': '橙色',
+                'brown': '棕色',
+                'gray': '灰色',
+                'pink': '粉色',
+                'purple': '紫色',
+                'lime': '柠檬绿',
+                'tan': '棕褐色',
+                'darkgray': '深灰色'
+            };
+            return names[color] || color;
+        }
+
+        function updateProgress() {
+            const totalCells = GRID_WIDTH * GRID_HEIGHT;
+            let filledCells = 0;
+            
+            for (let y = 0; y < GRID_HEIGHT; y++) {
+                for (let x = 0; x < GRID_WIDTH; x++) {
+                    if (gridData[y][x] !== 'white') {
+                        filledCells++;
+                    }
+                }
+            }
+            
+            const progress = (filledCells / totalCells) * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+        }
+
+        function clearCanvas() {
+            if (confirm('确定要清空画布吗？')) {
+                gridData = Array(GRID_HEIGHT).fill().map(() => Array(GRID_WIDTH).fill('white'));
+                drawGrid();
+                updateMaterialsList();
+                updateProgress();
+            }
+        }
+
+        function toggleGrid() {
+            showGrid = !showGrid;
+            drawGrid();
+        }
+
+        function generateInstructions() {
+            incCount(); // 增加计数
+            const instructions = generateDetailedInstructions();
+            downloadInstructions(instructions);
+        }
+
+        function generateDetailedInstructions() {
+            let instructions = "乐高拼搭指南\n";
+            instructions += "==================\n\n";
+            instructions += "项目规格：\n";
+            instructions += `- 总体尺寸：${TOTAL_W_MM}mm × ${TOTAL_H_MM}mm\n`;
+            instructions += `- 乐高模块尺寸：${MOD_W_MM}mm × ${MOD_H_MM}mm\n`;
+            instructions += `- 网格数量：${GRID_WIDTH}列 × ${GRID_HEIGHT}行\n`;
+            instructions += `- 总乐高数量：${(GRID_WIDTH*GRID_HEIGHT).toLocaleString()}块\n\n`;
+            
+            instructions += "材料清单：\n";
+            instructions += "----------\n";
+            
+            const materials = {};
+            for (let y = 0; y < GRID_HEIGHT; y++) {
+                for (let x = 0; x < GRID_WIDTH; x++) {
+                    const color = gridData[y][x];
+                    materials[color] = (materials[color] || 0) + 1;
+                }
+            }
+            
+            // 计算成本
+            let totalCost = 0;
+            const pricePerBrick = 0.5;
+            
+            Object.entries(materials).forEach(([color, count]) => {
+                if (count > 0) {
+                    instructions += `- ${getColorName(color)}：${count}块\n`;
+                    if (color !== 'white') {
+                        totalCost += count * pricePerBrick;
+                    }
+                }
+            });
+            
+            instructions += `\n材料成本：\n`;
+            instructions += `----------\n`;
+            instructions += `预估总成本：约${totalCost.toFixed(2)}元\n`;
+            instructions += `（按每块乐高${pricePerBrick}元计算，不含白色底色）\n\n`;
+            
+            instructions += "\n拼搭步骤：\n";
+            instructions += "----------\n";
+            
+            for (let y = 0; y < GRID_HEIGHT; y++) {
+                instructions += `第${y + 1}行：`;
+                for (let x = 0; x < GRID_WIDTH; x++) {
+                    const color = gridData[y][x];
+                    instructions += `${x + 1}(${getColorName(color)[0]}) `;
+                }
+                instructions += "\n";
+            }
+            
+            return instructions;
+        }
+
+        function downloadInstructions(content) {
+            const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = '乐高拼搭指南.txt';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // 量化到最近的乐高颜色
+        function hexToRgb(hex){
+          const v = hex.replace('#','');
+          return {r:parseInt(v.substring(0,2),16),g:parseInt(v.substring(2,4),16),b:parseInt(v.substring(4,6),16)};
+        }
+        const LEGO_RGB = Object.fromEntries(Object.entries(LEGO_COLORS).map(([k,v])=>[k,hexToRgb(v)]));
+        function colorDistance(a,b){
+          return Math.sqrt((a.r-b.r)**2+(a.g-b.g)**2+(a.b-b.b)**2);
+        }
+        function nearestLegoColor(r,g,b){
+          let bestColor = 'white';
+          let bestDist = Infinity;
+          for(const [name, rgb] of Object.entries(LEGO_RGB)){
+            const d = colorDistance({r,g,b}, rgb);
+            if(d < bestDist){ bestDist = d; bestColor = name; }
+          }
+          return bestColor;
+        }
+
+        // 初始化应用
+        function init(){
+          // 构建调色板
+          const palette = document.getElementById('colorPalette');
+          palette.innerHTML = '';
+          Object.entries(LEGO_COLORS).forEach(([name, hex])=>{
+            const btn = document.createElement('button');
+            btn.className = 'color-btn';
+            btn.style.backgroundColor = hex;
+            btn.title = name;
+            btn.addEventListener('click', ()=>{
+              selectedColor = name;
+              [...palette.children].forEach(el=>el.classList.remove('active'));
+              btn.classList.add('active');
+            });
+            palette.appendChild(btn);
+          });
+          palette.firstChild && palette.firstChild.classList.add('active');
+
+          // 画布绘制与交互
+          canvas.addEventListener('click', (e)=>{
+            const rect = canvas.getBoundingClientRect();
+            const x = Math.floor((e.clientX - rect.left) / CELL_SIZE);
+            const y = Math.floor((e.clientY - rect.top) / CELL_SIZE);
+            if(x>=0 && x<GRID_WIDTH && y>=0 && y<GRID_HEIGHT){
+              gridData[y][x] = selectedColor;
+              drawGrid();
+              updateMaterialsList();
+              updateProgress();
+            }
+          });
+
+          // 初始绘制
+          drawGrid();
+          updateMaterialsList();
+          updateProgress();
+        }
+
+        // 动态更新网格规格的函数
+        function updateSpecs(){
+            const tw = parseFloat(document.getElementById('totalWidth').value || '1000');
+            const th = parseFloat(document.getElementById('totalHeight').value || '1500');
+            const mw = parseFloat(document.getElementById('moduleWidth').value || '15.8');
+            const mh = parseFloat(document.getElementById('moduleHeight').value || '15.8');
+            
+            if(mw<=0 || mh<=0 || tw<=0 || th<=0){
+                alert('尺寸必须为正数');
+                return;
+            }
+            
+            TOTAL_W_MM = tw; TOTAL_H_MM = th; MOD_W_MM = mw; MOD_H_MM = mh;
+            GRID_WIDTH = Math.max(1, Math.round(TOTAL_W_MM / MOD_W_MM));
+            GRID_HEIGHT = Math.max(1, Math.round(TOTAL_H_MM / MOD_H_MM));
+            
+            // 重新初始化数据与画布尺寸
+            gridData = Array(GRID_HEIGHT).fill().map(()=>Array(GRID_WIDTH).fill('white'));
+            canvas.width = GRID_WIDTH * CELL_SIZE;
+            canvas.height = GRID_HEIGHT * CELL_SIZE;
+            
+            // 更新规格显示
+            document.getElementById('gridSize').textContent = `${GRID_WIDTH}×${GRID_HEIGHT}格`;
+            document.getElementById('totalBricks').textContent = `${(GRID_WIDTH*GRID_HEIGHT).toLocaleString()}块`;
+            
+            // 重新绘制
+            drawGrid();
+            updateMaterialsList();
+            updateProgress();
+        }
+
+        function showGridNumbers() {
+            // 按钮选中效果
+            toggleButtonActive('showGridBtn');
+            alert('网格编号功能：\n行编号：1-95（从上到下）\n列编号：1-63（从左到右）\n格子编号：行号-列号（如：1-1, 1-2...）');
+        }
+
+        function generateBuildingGuide() {
+            // 按钮选中效果
+            toggleButtonActive('buildGuideBtn');
+            alert('拼搭顺序建议：\n1. 从底部开始向上拼搭\n2. 按行从左到右依次放置\n3. 先完成轮廓再填充内部\n4. 相同颜色的区域可以批量处理');
+        }
+
+        function calculateCost() {
+            // 按钮选中效果
+            toggleButtonActive('calcCostBtn');
+            updateCostDisplay();
+        }
+
+        function toggleButtonActive(buttonId) {
+            // 清除所有工具按钮的active状态
+            ['showGridBtn', 'buildGuideBtn', 'calcCostBtn'].forEach(id => {
+                const btn = document.getElementById(id);
+                if (btn) {
+                    btn.classList.remove('btn-active');
+                    btn.style.backgroundColor = '';
+                    btn.style.transform = '';
+                    btn.style.boxShadow = '';
+                }
+            });
+            
+            // 设置当前按钮为active状态
+            const activeBtn = document.getElementById(buttonId);
+            if (activeBtn) {
+                activeBtn.classList.add('btn-active');
+                activeBtn.style.backgroundColor = '#2980b9';
+                activeBtn.style.transform = 'scale(1.05)';
+                activeBtn.style.boxShadow = '0 4px 12px rgba(52, 152, 219, 0.4)';
+                activeBtn.style.transition = 'all 0.2s ease';
+                
+                // 3秒后恢复正常状态
+                setTimeout(() => {
+                    activeBtn.classList.remove('btn-active');
+                    activeBtn.style.backgroundColor = '';
+                    activeBtn.style.transform = '';
+                    activeBtn.style.boxShadow = '';
+                }, 3000);
+            }
+        }
+
+        // 初始化计数显示
+        window.addEventListener('DOMContentLoaded', ()=>{
+            setCount(getCount());
+            document.getElementById('gridSize').textContent = `${GRID_WIDTH}×${GRID_HEIGHT}格`;
+            document.getElementById('totalBricks').textContent = `${(GRID_WIDTH*GRID_HEIGHT).toLocaleString()}块`;
+        });
+
+        // ==== 彩色渐变波浪动画（标题与版权）====
+        function setupWavyRainbow(elementId, opts={}){
+          const el = document.getElementById(elementId);
+          if(!el) return;
+          const text = el.textContent;
+          el.textContent = '';
+          const frag = document.createDocumentFragment();
+          const spans = [];
+          for(let i=0;i<text.length;i++){
+            const ch = text[i] === ' ' ? '\u00A0' : text[i];
+            const sp = document.createElement('span');
+            sp.textContent = ch;
+            sp.style.display = 'inline-block';
+            sp.style.willChange = 'transform,color,filter';
+            spans.push(sp);
+            frag.appendChild(sp);
+          }
+          el.appendChild(frag);
+          const amplitude = opts.amplitude ?? 6; // 垂直摆动幅度(px)
+          const phaseStep = opts.phaseStep ?? 0.5; // 相位步进(每字相位差)
+          const hueStep = opts.hueStep ?? 18; // 相邻字符色相差
+          const waveSpeed = opts.waveSpeed ?? 0.005; // 波速
+          const hueSpeed = opts.hueSpeed ?? 0.03; // 色相变化速度
+          function tick(t){
+            for(let i=0;i<spans.length;i++){
+              const sp = spans[i];
+              const y = Math.sin(t*waveSpeed + i*phaseStep) * amplitude;
+              const hue = (t*hueSpeed + i*hueStep) % 360;
+              sp.style.transform = `translateY(${y.toFixed(2)}px)`;
+              sp.style.color = `hsl(${hue.toFixed(1)}, 90%, 55%)`;
+            }
+            requestAnimationFrame(tick);
+          }
+          requestAnimationFrame(tick);
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+          // 标题：幅度更大，速度略快
+          setupWavyRainbow('animatedTitle', { amplitude: 7, phaseStep: 0.55, hueStep: 20, waveSpeed: 0.007, hueSpeed: 0.05 });
+          // 页脚：幅度更小，速度更柔和
+          setupWavyRainbow('animatedFooter', { amplitude: 3, phaseStep: 0.5, hueStep: 16, waveSpeed: 0.006, hueSpeed: 0.04 });
+        });
+
+        init();
+    </script>
+    
+    <footer style="text-align: center; padding: 20px; margin-top: 30px; border-top: 1px solid #eee; color: #666; font-size: 12px;" id="animatedFooter">
+        ©董洪宇工作室 2025. 保留所有权利.
+    </footer>
+        </div>
+    </div>
+</body>
+</html>

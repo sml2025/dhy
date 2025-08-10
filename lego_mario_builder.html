@@ -558,9 +558,11 @@
             setDisplayCount(n);
             return n;
         }
-        // 初始化时从服务器同步一次
+        // 初始化计数显示
         window.addEventListener('DOMContentLoaded', ()=>{
             fetchGlobalCount();
+            document.getElementById('gridSize').textContent = `${GRID_WIDTH}×${GRID_HEIGHT}格`;
+            document.getElementById('totalBricks').textContent = `${(GRID_WIDTH*GRID_HEIGHT).toLocaleString()}块`;
         });
 
         // 从图片生成 63×95 乐高底图
@@ -1110,7 +1112,7 @@
 
         // 初始化计数显示
         window.addEventListener('DOMContentLoaded', ()=>{
-            setCount(getCount());
+            fetchGlobalCount();
             document.getElementById('gridSize').textContent = `${GRID_WIDTH}×${GRID_HEIGHT}格`;
             document.getElementById('totalBricks').textContent = `${(GRID_WIDTH*GRID_HEIGHT).toLocaleString()}块`;
         });

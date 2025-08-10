@@ -102,8 +102,54 @@ def init_db():
             if column_name not in columns:
                 cursor.execute(f'ALTER TABLE consultations ADD COLUMN {column_name} {column_type}')
     
+    # 创建全站计数器表
+    cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='global_counters'")
+    counter_table_exists = cursor.fetchone()
+    
+    if not counter_table_exists:
+        cursor.execute('''
+            CREATE TABLE global_counters (
+                name TEXT PRIMARY KEY,
+                count INTEGER DEFAULT 0,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        # 初始化乐高生成器计数器
+        cursor.execute('INSERT OR IGNORE INTO global_counters (name, count) VALUES (?, 0)', ('lego_generation',))
+    
     conn.commit()
     conn.close()
+
+@app.route('/api/counter/generate', methods=['POST'])
+def increase_generate_counter():
+    """增加生成器的全站累计计数，返回最新数值"""
+    try:
+        conn = sqlite3.connect(DATABASE)
+        cursor = conn.cursor()
+        cursor.execute('UPDATE global_counters SET count = count + 1, updated_at = CURRENT_TIMESTAMP WHERE name = ?', ('lego_generation',))
+        if cursor.rowcount == 0:
+            cursor.execute('INSERT OR IGNORE INTO global_counters (name, count) VALUES (?, 1)', ('lego_generation',))
+        conn.commit()
+        cursor.execute('SELECT count FROM global_counters WHERE name = ?', ('lego_generation',))
+        value = cursor.fetchone()[0]
+        conn.close()
+        return jsonify({'success': True, 'count': value})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/counter/generate', methods=['GET'])
+def get_generate_counter():
+    """获取生成器的全站累计计数"""
+    try:
+        conn = sqlite3.connect(DATABASE)
+        cursor = conn.cursor()
+        cursor.execute('SELECT count FROM global_counters WHERE name = ?', ('lego_generation',))
+        row = cursor.fetchone()
+        value = row[0] if row else 0
+        conn.close()
+        return jsonify({'success': True, 'count': value})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
 
 def send_email(consultation_data):
     """发送邮件到指定邮箱"""

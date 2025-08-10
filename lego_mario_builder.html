@@ -464,20 +464,51 @@
             const s = String(n);
             return s.length>=9 ? s.slice(-9) : '0'.repeat(9 - s.length) + s;
         }
-        function getCount(){
+        function getLocalCount(){
             const v = parseInt(localStorage.getItem(COUNT_KEY)||'0',10);
             return isNaN(v)?0:v;
         }
-        function setCount(n){
-            localStorage.setItem(COUNT_KEY, String(n));
+        function setDisplayCount(n){
             const el = document.getElementById('generateCount');
             if(el) el.textContent = format9(n);
         }
-        function incCount(){ setCount(getCount()+1); }
+        async function fetchGlobalCount(){
+            try{
+                const res = await fetch('/api/counter/generate');
+                const data = await res.json();
+                if(data && data.success){
+                    setDisplayCount(data.count);
+                    return data.count;
+                }
+            }catch(e){ /* ignore */ }
+            // 回退到本地计数
+            const local = getLocalCount();
+            setDisplayCount(local);
+            return local;
+        }
+        async function incGlobalCount(){
+            try{
+                const res = await fetch('/api/counter/generate', { method: 'POST' });
+                const data = await res.json();
+                if(data && data.success){
+                    setDisplayCount(data.count);
+                    return data.count;
+                }
+            }catch(e){ /* ignore */ }
+            // 失败则回退到本地累加
+            const n = getLocalCount()+1;
+            localStorage.setItem(COUNT_KEY, String(n));
+            setDisplayCount(n);
+            return n;
+        }
+        // 初始化时从服务器同步一次
+        window.addEventListener('DOMContentLoaded', ()=>{
+            fetchGlobalCount();
+        });
 
         // 从图片生成 63×95 乐高底图
         function generateFromImage(){
-          incCount(); // 增加计数
+          incGlobalCount(); // 全站累计
           const file = document.getElementById('imageInput').files[0];
           if(!file){
             alert('请先选择一张图片');
@@ -567,7 +598,7 @@
 
         // 导出高清拼搭图（含每格序号与边缘行列号）
         function exportDesign(highRes=false){
-          incCount(); // 增加计数
+          incGlobalCount(); // 增加计数
           const scale = highRes ? 40 : CELL_SIZE; // 高清每格40像素
           const w = GRID_WIDTH*scale;
           const h = GRID_HEIGHT*scale;
@@ -814,7 +845,7 @@
         }
 
         function generateInstructions() {
-            incCount(); // 增加计数
+            incGlobalCount(); // 增加计数
             const instructions = generateDetailedInstructions();
             downloadInstructions(instructions);
         }

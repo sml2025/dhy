@@ -1,25 +1,16 @@
 {
-  "name": "生命力教育咨询工作室",
-  "short_name": "生命力教育咨询",
-      "description": "培养生命力长盛的个体⭐️ 家庭幸福和社会价值的创新者🌏",
-  "start_url": "/",
+  "name": "DHY乐高拼搭图生成器",
+  "short_name": "DHY乐高",
+  "start_url": "./lego_mario_builder.html",
   "display": "standalone",
-  "background_color": "#2ECC71",
-  "theme_color": "#2ECC71",
-  "orientation": "portrait-primary",
+  "background_color": "#ffffff",
+  "theme_color": "#2d7cf6",
+  "description": "在线生成像素化乐高拼搭图、材料清单与拼搭步骤的工具",
   "icons": [
     {
-      "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgdmlld0JveD0iMCAwIDE5MiAxOTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxOTIiIGhlaWdodD0iMTkyIiByeD0iMjQiIGZpbGw9IiMyRUNDNzEiLz4KPHBhdGggZD0iTTk2IDQ4QzY5LjQ5IDQ4IDQ4IDY5LjQ5IDQ4IDk2czIxLjQ5IDQ4IDQ4IDQ4IDQ4LTQ4IDQ4LTQ4LTQ4LTQ4LTQ4LTQ4eiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTk2IDY0Yy0xNy42NyAwLTMyIDE0LjMzLTMyIDMyczE0LjMzIDMyIDMyIDMyIDMyLTE0LjMzIDMyLTMyLTE0LjMzLTMyLTMyLTMyeiIgZmlsbD0iIzJFRUM3MSIvPgo8L3N2Zz4K",
-      "sizes": "192x192",
-      "type": "image/svg+xml"
-    },
-    {
-      "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgdmlld0JveD0iMCAwIDUxMiA1MTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI1MTIiIGhlaWdodD0iNTEyIiByeD0iNjQiIGZpbGw9IiMyRUNDNzEiLz4KPHBhdGggZD0iTTI1NiAxMjhjLTcwLjY5IDAtMTI4IDU3LjMxLTEyOCAxMjhzNTcuMzEgMTI4IDEyOCAxMjggMTI4LTU3LjMxIDEyOC0xMjgtNTcuMzEtMTI4LTEyOC0xMjh6IiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNMjU2IDE3MWMtNDcuMTIgMC04NSAzNy44OC04NSA4NXMzNy44OCA4NSA4NSA4NSA4NS0zNy44OCA4NS04NS0zNy44OC04NS04NS04NXoiIGZpbGw9IiMyRUNDNzEiLz4KPC9zdmc+Cg==",
-      "sizes": "512x512",
-      "type": "image/svg+xml"
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='192' height='192' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='24' fill='%232d7cf6'/%3E%3Cpath d='M96 48c-26.51 0-48 21.49-48 48s21.49 48 48 48 48-21.49 48-48-21.49-48-48-48z' fill='%23fff'/%3E%3Cpath d='M96 64c-17.67 0-32 14.33-32 32s14.33 32 32 32 32-14.33 32-32-14.33-32-32-32z' fill='%232d7cf6'/%3E%3C/svg%3E",
+      "type": "image/svg+xml",
+      "sizes": "192x192"
     }
-  ],
-  "categories": ["education", "business"],
-  "lang": "zh-CN",
-  "dir": "ltr"
-} 
+  ]
+}

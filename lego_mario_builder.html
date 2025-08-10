@@ -36,10 +36,29 @@
         .header h1 {
             font-size: 2.5rem;
             margin-bottom: 10px;
-            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            font-weight: 700;
+            /* 移除 background-clip，让动画颜色能正常显示 */
+            /* 添加文字阴影增强可读性 */
+            text-shadow: 
+                2px 2px 4px rgba(0, 0, 0, 0.3),
+                0 0 8px rgba(255, 255, 255, 0.8),
+                0 0 12px rgba(255, 255, 255, 0.5);
+            /* 为动画字符提供半透明背景 */
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px 20px;
+            border-radius: 15px;
+            backdrop-filter: blur(5px);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        /* 增强动画字符的可读性 */
+        #animatedTitle span {
+            text-shadow: 
+                1px 1px 2px rgba(0, 0, 0, 0.5),
+                0 0 4px rgba(255, 255, 255, 0.9),
+                0 0 8px rgba(255, 255, 255, 0.6);
+            font-weight: 700;
+            filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.8));
         }
 
         .specs {
@@ -1045,7 +1064,7 @@
 
         window.addEventListener('DOMContentLoaded', () => {
           // 标题：幅度更大，速度略快
-          setupWavyRainbow('animatedTitle', { amplitude: 7, phaseStep: 0.55, hueStep: 20, waveSpeed: 0.007, hueSpeed: 0.05 });
+          setupWavyRainbow('animatedTitle', { amplitude: 8, phaseStep: 0.5, hueStep: 22, waveSpeed: 0.006, hueSpeed: 0.045 });
           // 页脚：幅度更小，速度更柔和
           setupWavyRainbow('animatedFooter', { amplitude: 3, phaseStep: 0.5, hueStep: 16, waveSpeed: 0.006, hueSpeed: 0.04 });
         });

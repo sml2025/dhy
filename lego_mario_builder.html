@@ -479,7 +479,7 @@
                     <button class="btn tool-btn btn-primary" id="showGridBtn" onclick="showGridNumbers()">显示格子编号</button>
                     <button class="btn tool-btn btn-secondary" id="buildGuideBtn" onclick="generateBuildingGuide()">生成拼搭顺序</button>
                     <button class="btn tool-btn btn-success" id="calcCostBtn" onclick="calculateCost()">计算材料成本</button>
-+                    <label style="display:inline-flex; align-items:center; gap:6px; margin-left:12px; font-size:14px; color:#333;">
++                    <label style="display:inline-flex; align-items:center; gap:6px; margin-left:12px; font-size:14px; color:#333;"
 +                        每块成本(元)
 +                        <input id="pricePerBrickInput" type="number" min="0" step="0.01" value="0.5" style="width:90px; padding:6px 8px; border:1px solid #ddd; border-radius:6px;">
 +                    </label>
@@ -550,58 +550,99 @@
         }
         async function fetchGlobalCount(){
             try{
-                const res = await fetch(`${COUNTAPI_BASE}/get/${COUNTAPI_NS}/${COUNTAPI_KEY}`);
-                if(res.ok){
-                    const data = await res.json();
-                    if (data && typeof data.value === 'number') {
-                        setDisplayCount(data.value);
-                        return data.value;
+                console.log('正在获取全局计数...');
+                const response = await fetch(`${COUNTAPI_BASE}/get/${COUNTAPI_NS}/${COUNTAPI_KEY}`, {
+                    method: 'GET',
+                    mode: 'cors',
+                    headers: {
+                        'Accept': 'application/json',
                     }
+                });
+                
+                if(!response.ok) {
+                    console.warn('CountAPI 获取失败，状态:', response.status);
+                    throw new Error(`HTTP ${response.status}`);
                 }
+                
+                const data = await response.json();
+                console.log('CountAPI 获取结果:', data);
+                
+                if (data && typeof data.value === 'number') {
+                    setDisplayCount(data.value);
+                    return data.value;
+                }
+                
                 // 如果 key 不存在，尝试创建
-                await fetch(`${COUNTAPI_BASE}/create?namespace=${encodeURIComponent(COUNTAPI_NS)}&key=${encodeURIComponent(COUNTAPI_KEY)}&value=0`);
-                const res2 = await fetch(`${COUNTAPI_BASE}/get/${COUNTAPI_NS}/${COUNTAPI_KEY}`);
-                if(res2.ok){
-                    const data2 = await res2.json();
-                    if (data2 && typeof data2.value === 'number') {
-                        setDisplayCount(data2.value);
-                        return data2.value;
+                console.log('计数器不存在，尝试创建...');
+                const createResponse = await fetch(`${COUNTAPI_BASE}/create?namespace=${encodeURIComponent(COUNTAPI_NS)}&key=${encodeURIComponent(COUNTAPI_KEY)}&value=0`);
+                if (createResponse.ok) {
+                    const createData = await createResponse.json();
+                    console.log('CountAPI 创建结果:', createData);
+                    if (createData && typeof createData.value === 'number') {
+                        setDisplayCount(createData.value);
+                        return createData.value;
                     }
                 }
-            }catch(e){ /* ignore */ }
+            }catch(e){ 
+                console.error('CountAPI 请求失败:', e);
+                setDisplayCount(0);
+            }
             return 0;
         }
         async function incGlobalCount(){
             try{
-                const res = await fetch(`${COUNTAPI_BASE}/hit/${COUNTAPI_NS}/${COUNTAPI_KEY}`);
-                if(res.ok){
-                    const data = await res.json();
-                    if (data && typeof data.value === 'number') {
-                        setDisplayCount(data.value);
-                        return data.value;
+                console.log('正在增加全局计数...');
+                const response = await fetch(`${COUNTAPI_BASE}/hit/${COUNTAPI_NS}/${COUNTAPI_KEY}`, {
+                    method: 'GET',
+                    mode: 'cors',
+                    headers: {
+                        'Accept': 'application/json',
                     }
+                });
+                
+                if(!response.ok) {
+                    console.warn('CountAPI 自增失败，状态:', response.status);
+                    throw new Error(`HTTP ${response.status}`);
                 }
+                
+                const data = await response.json();
+                console.log('CountAPI 自增结果:', data);
+                
+                if (data && typeof data.value === 'number') {
+                    setDisplayCount(data.value);
+                    return data.value;
+                }
+                
                 // 如果未创建则先创建再自增
-                await fetch(`${COUNTAPI_BASE}/create?namespace=${encodeURIComponent(COUNTAPI_NS)}&key=${encodeURIComponent(COUNTAPI_KEY)}&value=0`);
-                const res2 = await fetch(`${COUNTAPI_BASE}/hit/${COUNTAPI_NS}/${COUNTAPI_KEY}`);
-                if(res2.ok){
-                    const data2 = await res2.json();
-                    if (data2 && typeof data2.value === 'number') {
-                        setDisplayCount(data2.value);
-                        return data2.value;
+                console.log('计数器不存在，先创建再自增...');
+                const createResponse = await fetch(`${COUNTAPI_BASE}/create?namespace=${encodeURIComponent(COUNTAPI_NS)}&key=${encodeURIComponent(COUNTAPI_KEY)}&value=1`);
+                if (createResponse.ok) {
+                    const createData = await createResponse.json();
+                    console.log('CountAPI 创建并设为1的结果:', createData);
+                    if (createData && typeof createData.value === 'number') {
+                        setDisplayCount(createData.value);
+                        return createData.value;
                     }
                 }
-            }catch(e){ /* ignore */ }
+            }catch(e){ 
+                console.error('CountAPI 自增失败:', e);
+                // 回退：增加本地计数器显示
+                const current = parseInt(document.getElementById('generateCount').textContent) || 0;
+                setDisplayCount(current + 1);
+            }
             return 0;
         }
-         // 初始化计数显示
-         window.addEventListener('DOMContentLoaded', ()=>{
-             fetchGlobalCount();
-             document.getElementById('gridSize').textContent = `${GRID_WIDTH}×${GRID_HEIGHT}格`;
-             document.getElementById('totalBricks').textContent = `${(GRID_WIDTH*GRID_HEIGHT).toLocaleString()}块`;
-         });
-
-        // 从图片生成 63×95 乐高底图
+        
+        // 获取用户设置的每块价格
+        function getPricePerBrick() {
+            const input = document.getElementById('pricePerBrickInput');
+            if (input) {
+                const value = parseFloat(input.value);
+                return isNaN(value) || value < 0 ? 0.5 : value;
+            }
+            return 0.5;
+        }
+         // 从图片生成 63×95 乐高底图
         function generateFromImage(){
           incGlobalCount(); // 全站累计
           const file = document.getElementById('imageInput').files[0];
@@ -875,7 +916,7 @@
             }
             
             let totalCost = 0;
-            const pricePerBrick = 0.5;
+            const pricePerBrick = getPricePerBrick();
             
             Object.entries(materials).forEach(([color, count]) => {
                 if (color !== 'white') {
@@ -1113,6 +1154,22 @@
             // 按钮选中效果
             toggleButtonActive('calcCostBtn');
             updateCostDisplay();
+        }
+
+        // 价格输入变化时，自动更新成本并持久化
+        const priceInput = document.getElementById('pricePerBrickInput');
+        if (priceInput) {
+            // 初始化：从 localStorage 读取
+            const saved = localStorage.getItem('price_per_brick');
+            if (saved !== null) {
+                const v = parseFloat(saved);
+                if (!isNaN(v)) priceInput.value = v;
+            }
+            priceInput.addEventListener('input', () => {
+                const v = getPricePerBrick();
+                localStorage.setItem('price_per_brick', String(v));
+                updateCostDisplay();
+            });
         }
 
         function toggleButtonActive(buttonId) {

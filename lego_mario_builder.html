@@ -1204,6 +1204,27 @@
             navigator.serviceWorker.register('sw.js')
               .then(reg => {
                 console.log('Service Worker 已注册:', reg.scope);
+                
+                // 监听 SW 更新
+                navigator.serviceWorker.addEventListener('message', event => {
+                  if (event.data && event.data.type === 'SW_UPDATED') {
+                    console.log('检测到 Service Worker 更新，自动刷新页面...');
+                    setTimeout(() => window.location.reload(), 100);
+                  }
+                });
+                
+                // 检查更新并强制刷新
+                reg.addEventListener('updatefound', () => {
+                  const newWorker = reg.installing;
+                  if (newWorker) {
+                    newWorker.addEventListener('statechange', () => {
+                      if (newWorker.state === 'activated' && navigator.serviceWorker.controller) {
+                        console.log('新 Service Worker 已激活，刷新页面以获取最新版本...');
+                        setTimeout(() => window.location.reload(), 200);
+                      }
+                    });
+                  }
+                });
               })
               .catch(err => console.log('Service Worker 注册失败:', err));
           });

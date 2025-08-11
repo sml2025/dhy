@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dhy-lego-v1';
+const CACHE_NAME = 'dhy-lego-v2';
 const urlsToCache = [
   './lego_mario_builder.html',
   './styles.css',
@@ -66,6 +66,11 @@ self.addEventListener('activate', event => {
       );
       // 立即控制所有客户端
       await self.clients.claim();
+      // 通知所有客户端刷新
+      const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+      for (const client of clients) {
+        client.postMessage({ type: 'SW_UPDATED' });
+      }
     })()
   );
 });

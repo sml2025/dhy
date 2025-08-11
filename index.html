@@ -54,19 +54,23 @@
         if (el) el.textContent = format9(n);
       }
       function initCount(){
+        console.log('[Index] 正在获取全局计数...');
         fetch(COUNTAPI_BASE + '/get/' + COUNTAPI_NS + '/' + COUNTAPI_KEY)
           .then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); })
-          .then(function(d){ if (d && typeof d.value==='number') setDisplay(d.value); })
+          .then(function(d){ console.log('[Index] 获取结果:', d); if (d && typeof d.value==='number') setDisplay(d.value); })
           .catch(function(){
+            console.warn('[Index] 获取失败，尝试创建 0 初始值');
             fetch(COUNTAPI_BASE + '/create?namespace=' + encodeURIComponent(COUNTAPI_NS) + '&key=' + encodeURIComponent(COUNTAPI_KEY) + '&value=0')
               .then(function(){ return fetch(COUNTAPI_BASE + '/get/' + COUNTAPI_NS + '/' + COUNTAPI_KEY); })
               .then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); })
-              .then(function(d){ if (d && typeof d.value==='number') setDisplay(d.value); })
-              .catch(function(){ setDisplay(0); });
+              .then(function(d){ console.log('[Index] 创建后获取结果:', d); if (d && typeof d.value==='number') setDisplay(d.value); })
+              .catch(function(err){ console.error('[Index] 创建失败:', err); setDisplay(0); });
           });
       }
+      // 立即尝试一次（避免重定向过快导致看不到日志）
+      try { initCount(); } catch(e) {}
       window.addEventListener('DOMContentLoaded', initCount);
-    })();
+     })();
   </script>
 +  <script>
      // JS 重定向（作为 meta refresh 的兜底）

@@ -151,9 +151,10 @@
             border-radius: 15px;
             padding: 20px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            overflow: auto;
             max-height: 800px;
             position: relative;
+            display: flex;
+            flex-direction: column;
         }
         
         .canvas-zoom-controls {
@@ -197,8 +198,16 @@
             display: block;
             margin: 0 auto;
             transition: transform 0.3s ease;
+            transform-origin: center center;
         }
 
+        .canvas-wrapper {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: auto;
+        }
         .sidebar {
             background: white;
             border-radius: 15px;
@@ -282,6 +291,13 @@
             display: flex;
             align-items: center;
             flex: 1;
+            .canvas-wrapper {
+                flex: 1;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                overflow: auto;
+            }
         }
 
         .material-count {
@@ -438,7 +454,9 @@
                     <button class="zoom-btn" onclick="zoomIn()" title="放大">➕</button>
                     <button class="zoom-btn" onclick="resetZoom()" title="重置缩放">🔄</button>
                 </div>
-                <canvas id="legoCanvas" class="canvas" width="630" height="950"></canvas>
+                <div class="canvas-wrapper">
+                    <canvas id="legoCanvas" class="canvas" width="630" height="950"></canvas>
+                </div>
             </div>
 
             <div class="sidebar">
@@ -461,8 +479,11 @@
                     <button class="btn tool-btn btn-primary" id="showGridBtn" onclick="showGridNumbers()">显示格子编号</button>
                     <button class="btn tool-btn btn-secondary" id="buildGuideBtn" onclick="generateBuildingGuide()">生成拼搭顺序</button>
                     <button class="btn tool-btn btn-success" id="calcCostBtn" onclick="calculateCost()">计算材料成本</button>
--                    <div id="costDisplay" style="margin-top: 10px; font-weight: bold; color: #333;"></div>
-+                    <div id="costDisplay" style="display:inline-block; margin-left:12px; font-weight: bold; color: #333; vertical-align: middle;"></div>
++                    <label style="display:inline-flex; align-items:center; gap:6px; margin-left:12px; font-size:14px; color:#333;">
++                        每块成本(元)
++                        <input id="pricePerBrickInput" type="number" min="0" step="0.01" value="0.5" style="width:90px; padding:6px 8px; border:1px solid #ddd; border-radius:6px;">
++                    </label>
+                     <div id="costDisplay" style="display:inline-block; margin-left:12px; font-weight: bold; color: #333; vertical-align: middle;"></div>
                  </div>
              </div>
          </div>
@@ -516,14 +537,12 @@
         let showGrid = true;
 
         // === 生成总数统计（9位，红色） ===
-        const COUNT_KEY = 'dhy_total_generate_count';
+        const COUNTAPI_BASE = 'https://api.countapi.xyz';
+        const COUNTAPI_NS = 'dhy_lego_mario'; // 可调整为你的命名空间
+        const COUNTAPI_KEY = 'generate_total'; // 可调整为你的键名
         function format9(n){
             const s = String(n);
             return s.length>=9 ? s.slice(-9) : '0'.repeat(9 - s.length) + s;
-        }
-        function getLocalCount(){
-            const v = parseInt(localStorage.getItem(COUNT_KEY)||'0',10);
-            return isNaN(v)?0:v;
         }
         function setDisplayCount(n){
             const el = document.getElementById('generateCount');
@@ -531,39 +550,56 @@
         }
         async function fetchGlobalCount(){
             try{
-                const res = await fetch('/api/counter/generate');
-                const data = await res.json();
-                if(data && data.success){
-                    setDisplayCount(data.count);
-                    return data.count;
+                const res = await fetch(`${COUNTAPI_BASE}/get/${COUNTAPI_NS}/${COUNTAPI_KEY}`);
+                if(res.ok){
+                    const data = await res.json();
+                    if (data && typeof data.value === 'number') {
+                        setDisplayCount(data.value);
+                        return data.value;
+                    }
+                }
+                // 如果 key 不存在，尝试创建
+                await fetch(`${COUNTAPI_BASE}/create?namespace=${encodeURIComponent(COUNTAPI_NS)}&key=${encodeURIComponent(COUNTAPI_KEY)}&value=0`);
+                const res2 = await fetch(`${COUNTAPI_BASE}/get/${COUNTAPI_NS}/${COUNTAPI_KEY}`);
+                if(res2.ok){
+                    const data2 = await res2.json();
+                    if (data2 && typeof data2.value === 'number') {
+                        setDisplayCount(data2.value);
+                        return data2.value;
+                    }
                 }
             }catch(e){ /* ignore */ }
-            // 回退到本地计数
-            const local = getLocalCount();
-            setDisplayCount(local);
-            return local;
+            return 0;
         }
         async function incGlobalCount(){
             try{
-                const res = await fetch('/api/counter/generate', { method: 'POST' });
-                const data = await res.json();
-                if(data && data.success){
-                    setDisplayCount(data.count);
-                    return data.count;
+                const res = await fetch(`${COUNTAPI_BASE}/hit/${COUNTAPI_NS}/${COUNTAPI_KEY}`);
+                if(res.ok){
+                    const data = await res.json();
+                    if (data && typeof data.value === 'number') {
+                        setDisplayCount(data.value);
+                        return data.value;
+                    }
+                }
+                // 如果未创建则先创建再自增
+                await fetch(`${COUNTAPI_BASE}/create?namespace=${encodeURIComponent(COUNTAPI_NS)}&key=${encodeURIComponent(COUNTAPI_KEY)}&value=0`);
+                const res2 = await fetch(`${COUNTAPI_BASE}/hit/${COUNTAPI_NS}/${COUNTAPI_KEY}`);
+                if(res2.ok){
+                    const data2 = await res2.json();
+                    if (data2 && typeof data2.value === 'number') {
+                        setDisplayCount(data2.value);
+                        return data2.value;
+                    }
                 }
             }catch(e){ /* ignore */ }
-            // 失败则回退到本地累加
-            const n = getLocalCount()+1;
-            localStorage.setItem(COUNT_KEY, String(n));
-            setDisplayCount(n);
-            return n;
+            return 0;
         }
-        // 初始化计数显示
-        window.addEventListener('DOMContentLoaded', ()=>{
-            fetchGlobalCount();
-            document.getElementById('gridSize').textContent = `${GRID_WIDTH}×${GRID_HEIGHT}格`;
-            document.getElementById('totalBricks').textContent = `${(GRID_WIDTH*GRID_HEIGHT).toLocaleString()}块`;
-        });
+         // 初始化计数显示
+         window.addEventListener('DOMContentLoaded', ()=>{
+             fetchGlobalCount();
+             document.getElementById('gridSize').textContent = `${GRID_WIDTH}×${GRID_HEIGHT}格`;
+             document.getElementById('totalBricks').textContent = `${(GRID_WIDTH*GRID_HEIGHT).toLocaleString()}块`;
+         });
 
         // 从图片生成 63×95 乐高底图
         function generateFromImage(){
@@ -931,7 +967,7 @@
             
             // 计算成本
             let totalCost = 0;
-            const pricePerBrick = 0.5;
+            const pricePerBrick = getPricePerBrick();
             
             Object.entries(materials).forEach(([color, count]) => {
                 if (count > 0) {
@@ -1175,7 +1211,7 @@
     </script>
     
     <footer style="text-align: center; padding: 20px; margin-top: 30px; border-top: 1px solid #eee; color: #666; font-size: 12px;" id="animatedFooter">
-        ©董洪宇工作室 2025. 保留所有权利.
+        ©DHY工作室 2025. 保留所有权利.
     </footer>
         </div>
     </div>

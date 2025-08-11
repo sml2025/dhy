@@ -68,23 +68,25 @@
       window.addEventListener('DOMContentLoaded', initCount);
     })();
   </script>
-    // JS 重定向（作为 meta refresh 的兜底）
-    window.addEventListener('DOMContentLoaded', function(){
-      var target = 'lego_mario_builder.html';
-      if (location.pathname.endsWith('/') || location.pathname.endsWith('/index.html')) {
-        window.location.replace(target);
-      } else {
-        // 直接尝试跳转
-        window.location.href = target;
-      }
-    });
-  </script>
++  <script>
+     // JS 重定向（作为 meta refresh 的兜底）
+     window.addEventListener('DOMContentLoaded', function(){
+       var target = 'lego_mario_builder.html';
+       if (location.pathname.endsWith('/') || location.pathname.endsWith('/index.html')) {
+         window.location.replace(target);
+       } else {
+         // 直接尝试跳转
+         window.location.href = target;
+       }
+     });
+   </script>
 </head>
 <body>
   <div class="card">
-    <h1>正在前往 DHY乐高拼搭图生成器 …</h1>
-    <p>如果没有自动跳转，请点击下面按钮进入。</p>
-    <p><a class="btn" href="lego_mario_builder.html">进入 DHY乐高拼搭图生成器</a></p>
+     <h1>正在前往 DHY乐高拼搭图生成器 …</h1>
+     <p>如果没有自动跳转，请点击下面按钮进入。</p>
++    <p>生成总数统计：<span id="generateCount" style="color: red; font-weight: bold;">000000000</span></p>
+     <p><a class="btn" href="lego_mario_builder.html">进入 DHY乐高拼搭图生成器</a></p>
   </div>
 </body>
 </html>

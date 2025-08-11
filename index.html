@@ -17,10 +17,57 @@
     // 注册 Service Worker（尽早执行，以清理旧缓存并提升离线体验）
     if ('serviceWorker' in navigator) {
       try {
-        navigator.serviceWorker.register('sw.js').catch(function(err){ console.log('SW 注册失败:', err); });
+        navigator.serviceWorker.register('sw.js').then(function(reg){
+          // 监听 SW 的更新消息
+          navigator.serviceWorker.addEventListener('message', function(event){
+            if (event.data && event.data.type === 'SW_UPDATED') {
+              console.log('检测到 Service Worker 更新（index.html），刷新页面以获取最新版本...');
+              setTimeout(function(){ window.location.reload(); }, 100);
+            }
+          });
+          reg.addEventListener('updatefound', function(){
+            var newWorker = reg.installing;
+            if (newWorker) {
+              newWorker.addEventListener('statechange', function(){
+                if (newWorker.state === 'activated' && navigator.serviceWorker.controller) {
+                  console.log('新 Service Worker 已激活（index.html），刷新以获取最新版本');
+                  setTimeout(function(){ window.location.reload(); }, 200);
+                }
+              });
+            }
+          });
+        }).catch(function(err){ console.log('SW 注册失败:', err); });
       } catch(e) { /* ignore */ }
     }
 
+    // CountAPI：在入口页显示/初始化计数
+    (function(){
+      var COUNTAPI_BASE = 'https://api.countapi.xyz';
+      var COUNTAPI_NS = 'DHYLG';
+      var COUNTAPI_KEY = 'DHYLG';
+      function format9(n){
+        var s = String(n);
+        return s.length>=9 ? s.slice(-9) : '0'.repeat(9 - s.length) + s;
+      }
+      function setDisplay(n){
+        var el = document.getElementById('generateCount');
+        if (el) el.textContent = format9(n);
+      }
+      function initCount(){
+        fetch(COUNTAPI_BASE + '/get/' + COUNTAPI_NS + '/' + COUNTAPI_KEY)
+          .then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); })
+          .then(function(d){ if (d && typeof d.value==='number') setDisplay(d.value); })
+          .catch(function(){
+            fetch(COUNTAPI_BASE + '/create?namespace=' + encodeURIComponent(COUNTAPI_NS) + '&key=' + encodeURIComponent(COUNTAPI_KEY) + '&value=0')
+              .then(function(){ return fetch(COUNTAPI_BASE + '/get/' + COUNTAPI_NS + '/' + COUNTAPI_KEY); })
+              .then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); })
+              .then(function(d){ if (d && typeof d.value==='number') setDisplay(d.value); })
+              .catch(function(){ setDisplay(0); });
+          });
+      }
+      window.addEventListener('DOMContentLoaded', initCount);
+    })();
+  </script>
     // JS 重定向（作为 meta refresh 的兜底）
     window.addEventListener('DOMContentLoaded', function(){
       var target = 'lego_mario_builder.html';

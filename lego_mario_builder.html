@@ -538,8 +538,8 @@
 
         // === 生成总数统计（9位，红色） ===
         const COUNTAPI_BASE = 'https://api.countapi.xyz';
-        const COUNTAPI_NS = 'dhy_lego_mario'; // 可调整为你的命名空间
-        const COUNTAPI_KEY = 'generate_total'; // 可调整为你的键名
+        const COUNTAPI_NS = 'DHYLG'; // 命名空间
+        const COUNTAPI_KEY = 'DHYLG'; // 键名
         function format9(n){
             const s = String(n);
             return s.length>=9 ? s.slice(-9) : '0'.repeat(9 - s.length) + s;
